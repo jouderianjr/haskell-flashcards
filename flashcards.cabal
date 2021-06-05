@@ -25,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Models
   other-modules:
       Paths_flashcards
   hs-source-dirs:
@@ -32,6 +33,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , containers
     , servant-server
     , wai
     , warp
@@ -47,6 +49,7 @@ executable flashcards-exe
   build-depends:
       aeson
     , base
+    , containers
     , flashcards
     , servant-server
     , wai
@@ -64,6 +67,7 @@ test-suite flashcards-test
   build-depends:
       aeson
     , base
+    , containers
     , flashcards
     , hspec
     , hspec-wai

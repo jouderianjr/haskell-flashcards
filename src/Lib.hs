@@ -1,29 +1,36 @@
 {-# LANGUAGE DataKinds       #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators   #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Lib
-    ( startApp
-    , app
-    ) where
+  ( startApp
+  , app
+  ) where
 
-import Data.Aeson
-import Data.Aeson.TH
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Servant
+import           Data.Aeson
+import           Data.Aeson.TH
+import           Models                         ( Card
+                                                , Deck
+                                                , cardsById
+                                                , decks
+                                                )
+import           Network.Wai
+import           Network.Wai.Handler.Warp
+import           Servant
 
-data User = User
-  { userId        :: Int
-  , userFirstName :: String
-  , userLastName  :: String
-  } deriving (Eq, Show)
+type API =
+  Get '[PlainText] String
+  :<|> "decks" :> Get '[JSON] [Deck]
+  :<|> "decks" :> Capture "deckId" String :> Get '[JSON] [Card]
 
-$(deriveJSON defaultOptions ''User)
-
-type API = "users" :> Get '[JSON] [User]
+port :: Int
+port = 8080
 
 startApp :: IO ()
-startApp = run 8080 app
+startApp = do
+  putStrLn $ "Server started on " ++ show port
+  run port app
 
 app :: Application
 app = serve api server
@@ -32,9 +39,15 @@ api :: Proxy API
 api = Proxy
 
 server :: Server API
-server = return users
+server = homeHandler :<|> getDecksHandler :<|> getCardsByIdHandler
 
-users :: [User]
-users = [ User 1 "Isaac" "Newton"
-        , User 2 "Albert" "Einstein"
-        ]
+homeHandler :: Handler String
+homeHandler = return "We are alive!"
+
+getDecksHandler :: Handler [Deck]
+getDecksHandler = return decks
+
+getCardsByIdHandler :: String -> Handler [Card]
+getCardsByIdHandler deckId = case cardsById deckId of
+  Just cards -> return cards
+  Nothing    -> throwError $ err404 { errBody = "Deck not Found" }
